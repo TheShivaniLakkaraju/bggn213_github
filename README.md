@@ -5,7 +5,7 @@ Winter 2025 class content:
 
 - Class 04 Introduction to R
 
-- Class 05 [Data visualization with ggplot2] (https://github.com/TheShivaniLakkaraju/bggn213_github/blob/main/class05/class05.qmd)
+- Class 05 [Data visualization with ggplot2](https://github.com/TheShivaniLakkaraju/bggn213_github/blob/main/class05/class05.qmd)
 
 - Class 06 Why, when and how of writing your own R functions
 
