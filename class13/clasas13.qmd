@@ -1,0 +1,262 @@
+---
+title: "class 13: RNAseq intro"
+author: "shivani"
+format: pdf
+toc: true
+---
+
+## Data import
+
+There are 2 datasets needed: 
+-contData
+-colData
+
+```{r}
+counts <- read.csv("airway_scaledcounts.csv", row.names=1)
+metadata <- read.csv("airway_metadata.csv")
+```
+
+> Q1. How many genes are in this dataset? 
+
+```{r}
+nrow(counts)
+```
+38694 genes
+
+> Q2. How many ‘control’ cell lines do we have?
+
+```{r}
+metadata
+```
+
+4 controls based on viewing the metadata table. 
+
+## Mean counts per condition
+
+```{r}
+control.inds <- metadata$dex=="control"
+control.counts <- counts[,control.inds]
+control.mean <- rowMeans(control.counts)
+```
+
+```{r}
+head(control.counts)
+```
+>Q3. How would you make the above code in either approach more robust? Is there a function that could help here?
+
+Skipped in class
+
+control.mean <- rowSums(control.counts)/nrow(control.counts)
+
+> Q4. Follow the same procedure for the treated samples (i.e. calculate the mean per gene across drug treated samples and assign to a labeled vector called treated.mean)
+
+```{r}
+treated.inds <- metadata$dex=="treated"
+treated.counts <- counts[,treated.inds]
+treated.mean <- rowMeans(treated.counts)
+```
+combine our meancount data for bookkeeping purpose
+```{r}
+meancounts <- data.frame(control.mean, treated.mean)
+head(meancounts)
+```
+
+> Q5 (a). Create a scatter plot showing the mean of the treated samples against the mean of the control samples. Your plot should look something like the following.
+
+```{r}
+plot(meancounts)
+```
+
+```{r}
+library(ggplot2)
+
+ggplot(meancounts, aes(control.mean, treated.mean)) + geom_point(alpha = 0.3)
+```
+
+> Q6. Try plotting both axes on a log scale. What is the argument to plot() that allows you to do this?
+
+```{r}
+plot(meancounts, log="xy")
+```
+## Log fold change 
+
+calculate log2 fold change
+
+```{r}
+meancounts$log2fc <- log2(meancounts$treated.mean / meancounts$control.mean)
+
+head(meancounts)
+```
+
+There are a couple of “weird” results. Namely, the NaN (“not a number”) and -Inf (negative infinity) results. Let’s filter our data to remove these genes.
+
+```{r}
+to.keep <- rowSums(meancounts[,1:2]==0) == 0
+mycounts <- meancounts[to.keep, ]
+```
+
+>Q.7 
+
+Skipped in class
+
+> Q. how many non-zero count genes do we have left?
+
+```{r}
+nrow(mycounts)
+```
+
+> Q8. Using the up.ind vector above can you determine how many up regulated genes we have at the greater than 2 fc level? 
+
+```{r}
+up.ind <- mycounts$log2fc > 2
+sum(up.ind)
+```
+250 genes
+
+> Q9. Using the down.ind vector above can you determine how many down regulated genes we have at the greater than 2 fc level?
+
+```{r}
+down.ind <- mycounts$log2fc < (-2)
+sum(down.ind)
+```
+367 genes
+
+> Q10. Do you trust these results? Why or why not?
+
+No, because we have not tested if these results based on fold change are statistically significant. 
+
+## DESeq analysis
+
+```{r}
+#/ message: false
+
+library(DESeq2)
+```
+
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = counts,
+                       colData = metadata,
+                       design = ~dex)
+```
+```{r}
+dds <- DESeq(dds)
+```
+
+```{r}
+res <- results(dds)
+head(res)
+```
+### Save results
+
+```{r}
+write.csv(res, file = "myresults.csv")
+```
+
+
+### Volcanol Plot 
+
+Let’s make a commonly produced visualization from this data, namely a so-called Volcano plot.
+
+```{r}
+plot(res$log2FoldChange,  -log(res$padj))
+```
+
+```{r}
+mycols <- rep("gray", nrow(res))
+mycols[res$log2FoldChange >= 2] <- "red"
+mycols[res$log2FoldChange <= -2] <- "red"
+mycols[res$padj > 0.05] <- "gray"
+```
+
+
+
+```{r}
+ggplot(res, aes(log2FoldChange, -log(padj))) +
+  geom_point(col=mycols) +
+  labs(title="Summary Volcano Plot") +
+  xlab("Log2 Fold Change") +
+  ylab("-Log Adjusted P-value") +
+  geom_vline(xintercept = c(-2,2), col="darkgray") + 
+  geom_hline(yintercept = -log(0.005), col="darkgray") +
+  theme_classic()
+```
+
+## Adding annotation data
+
+```{r}
+head(rownames(res))
+```
+```{r}
+library("AnnotationDbi")
+library("org.Hs.eg.db")
+```
+
+```{r}
+columns(org.Hs.eg.db)
+```
+```{r}
+res$symbol <- mapIds(org.Hs.eg.db,
+                     keys=row.names(res), # Our genenames
+                     keytype="ENSEMBL",# The format of our genenames
+                     column="SYMBOL",# The new format we want to add
+                     multiVals="first")
+
+res$genename <- mapIds(org.Hs.eg.db,
+                     keys=row.names(res), # Our genenames
+                     keytype="ENSEMBL",# The format of our genenames
+                     column="GENENAME",# The new format we want to add
+                     multiVals="first")
+
+res$entrez <- mapIds(org.Hs.eg.db,
+                     keys=row.names(res), # Our genenames
+                     keytype="ENSEMBL",# The format of our genenames
+                     column="ENTREZID",# The new format we want to add
+                     multiVals="first")
+```
+
+```{r}
+head(res)
+```
+
+```{r}
+write.csv(res, file="myresults_annotated.csv")
+```
+
+## Pathway Analysis
+
+KEGG:
+
+```{r}
+library(pathview)
+library(gage)
+library(gageData)
+
+data(kegg.sets.hs)
+
+# Examine the first 2 pathways in this kegg set for humans
+head(kegg.sets.hs, 2)
+```
+
+The main gage() function requires a named vector of fold changes, where the names of the values are the Entrez gene IDs.
+
+```{r}
+foldchanges = res$log2FoldChange
+names(foldchanges) = res$entrez
+head(foldchanges)
+```
+```{r}
+# Get the results
+keggres = gage(foldchanges, gsets=kegg.sets.hs)
+```
+
+```{r}
+# Look at the first three down (less) pathways
+head(keggres$less)
+```
+
+```{r}
+pathview(gene.data=foldchanges, pathway.id="hsa05310")
+```
+
+![](hsa05310.pathview.png)
+

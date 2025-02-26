@@ -1,0 +1,285 @@
+---
+title: "Class 9: Halloween Candy Project"
+author: "Shivani Lakkaraju"
+format: pdf
+toc: true
+---
+
+## Background
+
+Today we are delving into an analysis of Halloween candy data using ggplot, dplyr, basic stats, correlation analysis, and PCA.
+
+## Import data
+
+```{r import}
+candy <- read.csv("candy-data.txt", row.names=1)
+head(candy)
+```
+
+> Q1. How many different candy types are in this dataset?
+
+```{r}
+nrow(candy)
+```
+
+> Q2. How many fruity candy types are in the dataset?
+
+```{r}
+sum(candy$fruity)
+```
+
+>Q3. how many chocolate candy types in this dataset?
+
+```{r}
+sum(candy$chocolate)
+```
+
+## What is your favorite candy?
+
+```{r}
+candy["Twix", ]$winpercent
+```
+
+```{r}
+#| message: false
+library(dplyr)
+```
+
+We can also use the `filter()` and `select()` functions from **dplyr**
+```{r}
+candy |> 
+  filter(rownames(candy)=="Almond Joy") |>
+  select(winpercent, sugarpercent)
+```
+
+A useful function for a quick look at a new dataset is found in **skimr** package:
+
+```{r}
+#library("skimr")
+skimr::skim(candy)
+```
+
+> Q6. Is there any variable/column that looks to be on a different scale to the majority of the other columns in the dataset?
+
+Yes - `winpercent` column is on a different scale or range than all the others.
+
+**N.B** I will scale this data before analysis like PCA for example to avoid this one variable dominating our analysis.
+
+>Q7. What do you think a zero and one represent for the candy$chocolate column?
+
+zero means no chocolate and one means it contains chocolate.
+
+>Q8. Plot a histogram of winpercent values with base R and ggplot
+
+```{r}
+hist(candy$winpercent)
+```
+```{r}
+library(ggplot2)
+ggplot(candy, aes(winpercent)) + geom_histogram(bins=10, fill="purple")
+```
+
+>Q9. Is the distribution of winpercent values symmetrical?
+
+no!
+
+>Q10. Is the center of the distribution above or below 50%?
+
+below
+
+```{r}
+summary(candy$winpercent)
+```
+
+
+>Q11. On average is chocolate candy higher or lower ranked than fruit candy?
+
+```{r}
+choc.inds <- candy$chocolate == 1
+choc.candy <- candy[ choc.inds, ]
+choc.win <- choc.candy$winpercent
+mean(choc.win)
+```
+```{r}
+fruit.inds <- candy$fruity == 1
+fruit.candy <- candy[ fruit.inds, ]
+fruit.win <- fruit.candy$winpercent
+mean(fruit.win)
+```
+
+>Q12. Is this difference statistically significant?
+
+yes! 
+
+```{r}
+t.test(choc.win, fruit.win)
+```
+
+## 3. Overall Candy Rankings
+
+> Q13. What are the five least liked candy types in this set?
+
+Can use the output of `order(winpercent)` to rearrange the dataset by `winpercent`.
+
+```{r}
+ord.inds <- order(candy$winpercent)
+head(candy[ord.inds,], 5)
+
+```
+
+```{r}
+candy |>
+  arrange(winpercent) |>
+  head()
+```
+
+
+>Q14. What are the top 5 all time favorite candy types out of this set?
+
+```{r}
+candy |>
+  arrange(-winpercent) |>
+  head()
+```
+
+> Q15. Make a first barplot of candy ranking based on winpercent values.
+
+```{r}
+ggplot(candy) + 
+  aes(winpercent, rownames(candy)) +
+  geom_col()
+```
+
+Improved plot with `reorder()`
+```{r}
+p <- ggplot(candy) + 
+  aes(winpercent, reorder(rownames(candy), winpercent)) +
+  geom_col() + ylab("") + xlab("Win Percent")
+```
+
+```{r}
+ggsave("my_plot.png", height=12, width=5)
+```
+
+![Fig. X](my_plot.png)
+
+>Q. color bars by "chocolate"
+
+```{r}
+p <- ggplot(candy) + 
+  aes(winpercent, reorder(rownames(candy), winpercent), fill=chocolate) +
+  geom_col() + ylab("") + xlab("Win Percent")
+
+p
+```
+
+Define our own custom color vector that has the exact color mappings we want:
+
+```{r}
+mycols <- rep("black", nrow(candy))
+mycols[candy$chocolate==1] <- "chocolate"
+mycols[candy$bar==1] <- "brown"
+mycols[candy$fruity==1] <- "pink"
+
+mycols
+```
+
+```{r}
+p <- ggplot(candy) + 
+  aes(winpercent, reorder(rownames(candy), winpercent)) +
+  geom_col(fill=mycols) + ylab("") + xlab("Win Percent")
+
+p
+```
+```{r}
+ggsave("my_color_plot.png", height=12, width=6)
+```
+
+![](my_color_plot.png)
+Now, for the first time, using this plot we can answer questions like:
+
+> Q17. What is the worst ranked chocolate candy?
+
+Sixlets
+
+> Q18. What is the best ranked fruity candy?
+
+Starburst
+
+## Taking a look at pricepercent
+
+plot of winpercent vs the pricepercent
+
+```{r}
+ggplot(candy, aes(winpercent, pricepercent, label=rownames(candy))) + geom_point(col=mycols) + theme_bw() + geom_text(col=mycols)
+```
+To avoid overplotting, we use **ggrepel** package :
+
+```{r}
+library(ggrepel)
+
+ggplot(candy, aes(winpercent, pricepercent, label=rownames(candy))) + geom_point(col=mycols) + theme_bw() + geom_text_repel(col=mycols)
+```
+Control amount of visible labels by setting different `max.overlaps` value:
+
+```{r}
+#change pink to red for fruity:
+mycols[candy$fruity==1] <- "red"
+
+ggplot(candy, aes(winpercent, pricepercent, label=rownames(candy))) + geom_point(col=mycols) + theme_bw() + geom_text(col=mycols, max.overlaps = 8)
+```
+
+>Q19. Which candy type is the highest ranked in terms of winpercent for the least money - i.e. offers the most bang for your buck?
+
+Reeses miniatures
+
+> Q20. What are the top 5 most expensive candy types in the dataset and of these which is the least popular?
+
+Nik L nip is least popular, Nestle Smarties, Ring pop, Hershey's Krackel,	
+Hershey's Milk Chocolate
+
+```{r}
+candy |>
+  arrange(-pricepercent) |>
+  head()
+```
+
+
+## 5 Exploring the correlation structure
+
+The main function for correlation analysis in base R: `corr()`:
+
+```{r}
+cij <- cor(candy)
+head(cij)
+```
+
+```{r}
+library(corrplot)
+cij <- cor(candy)
+corrplot(cij)
+```
+
+## 6. Principal Component Analysis
+
+use `prcom()` function remembering to set the scale=TRUE argument. 
+
+```{r}
+pca <- prcomp(candy, scale=TRUE)
+```
+
+Let's make our main results figures, score (PC) plot
+
+```{r}
+ggplot(pca$x, aes(PC1, PC2, label=rownames(candy))) + geom_point(col=mycols) + geom_text_repel(col=mycols, max.overlaps = 8)
+```
+
+look at variable loadings
+
+```{r}
+ggplot(pca$rotation, 
+       aes(PC1, reorder(rownames(pca$rotation), 
+                        PC1))) +
+  geom_col()
+```
+

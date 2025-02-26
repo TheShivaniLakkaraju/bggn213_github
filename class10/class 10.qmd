@@ -1,0 +1,180 @@
+---
+title: "Class 10: Structural Bioinformatics pt. 1"
+author: "Shivani Lakkaraju"
+format: pdf
+toc: true
+---
+
+# The PDB database 
+
+The main repository for biomolecular data is the PDB (protein data bank) and can be found at: http://www.rcsb.org/
+
+```{r}
+pdbstats <- read.csv("Data Export Summary.csv")
+pdbstats
+```
+
+
+```{r}
+nocomma <- sub(",", "", pdbstats$X.ray)
+sum(as.numeric(nocomma))
+```
+
+
+```{r}
+library(readr)
+pdbstats <- read_csv("Data Export Summary.csv")
+pdbstats
+```
+The resulting column names are "untidy" with spaces and mixed cases. We can use the **janitor** package and its `clean_names()` function to fix this. 
+
+```{r}
+library(janitor)
+df <- clean_names(pdbstats)
+```
+
+> Q1: What percentage of structures in the PDB are solved by X-Ray and Electron Microscopy.
+
+Percent of structures in PDB solved by:
+x-ray: 82.83549 %
+EM: 10.75017 %
+
+```{r}
+n.xray <- sum(df$x_ray)
+n.em <- sum(df$em)
+n.total <- sum(df$total)
+n.xray
+n.em
+n.total
+```
+
+```{r}
+n.xray/n.total * 100
+n.em/n.total * 100
+```
+
+> Q2: What proportion of structures in the PDB are protein?
+
+```{r}
+round(df$total[1]/n.total * 100, digits = 2)
+```
+>Q3: Type HIV in the PDB website search box on the home page and determine how many HIV-1 protease structures are in the current PDB?
+
+231,029 structures
+
+In uniprot there are 253206171 sequences and only 231,029 known structures in the PDB. 
+
+```{r}
+231029/253206171 * 100
+```
+
+
+## 2. Molecular visualization with Mol*
+
+https://molstar.org/ 
+
+my first image from Mol* of HIV-Pr
+
+![Fig. 1: A first view of HIV-Pr dimer](1HSG.png)
+
+
+I want an image that shows the binding cleft of MK1 inhibitor, an image of the most valuable water in history, and an image of the ASP cleft
+
+![Binding cleft](1HSG (1).png)
+
+![](1HSG (2).png)
+
+![Overview with HOH 308 and ASP25 highlighted](1HSG (4).png)
+
+
+## Using the Bio3D package
+
+Bio3D is an R package for structural bioinformatics. Features include the ability to read, write and analyze biomolecular structure, sequence and dynamic trajectory data.
+
+```{r}
+library(bio3d)
+
+hiv <- read.pdb("1hsg")
+hiv
+```
+
+```{r}
+head(hiv$atom)
+```
+
+>Q. how many amino acids in this structure:
+
+```{r}
+s <- pdbseq(hiv)
+head(s)
+length(s)
+```
+
+## Predict functional motions
+
+Let's read a new structure
+
+```{r}
+pdb <- read.pdb("6s36")
+pdb
+```
+
+Normal mode analysis (NMA)
+
+```{r}
+m <- nma(pdb)
+plot(m, sse=pdb)
+```
+
+To view a “movie” of these predicted motions we can generate a molecular “trajectory” with the mktrj() function.
+
+```{r}
+mktrj(m, file="results.pdb")
+```
+
+## 5: Comparative structure analysis of Adenylate Kinase *
+
+```{r}
+library(bio3d)
+aa <- get.seq("1ake_A")
+aa
+```
+
+```{r}
+b <- blast.pdb(aa)
+hits <- plot(b)
+```
+```{r}
+head(b$raw)
+```
+
+
+```{r}
+head(hits$pdb.id)
+```
+
+Download all these structures to our project dir:
+
+```{r}
+# Download releated PDB files
+files <- get.pdb(hits$pdb.id, path="pdbs", split=TRUE, gzip=TRUE)
+```
+
+## align and superpose
+
+```{r}
+# Align releated PDBs
+pdbs <- pdbaln(files, fit = TRUE, exefile="msa")
+```
+
+## PCA 
+
+```{r}
+pc.xray <- pca(pdbs)
+plot(pc.xray)
+```
+
+```{r}
+plot(pc.xray, pc.axes = c(1,2))
+```
+

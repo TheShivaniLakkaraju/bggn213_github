@@ -1,0 +1,78 @@
+---
+title: "alphafold analysis"
+author: "shivani"
+format: html
+---
+
+```{r}
+library(bio3d)
+```
+
+PDB File names of models
+```{r}
+files <- list.files("hiv_monomer_94b5b/", pattern = ".pdb",
+           full.names=T)
+```
+
+Align and superpose
+```{r}
+pdbs <- pdbaln(files, fit=TRUE, exefile="msa")
+```
+
+RMSD analysis 
+
+```{r}
+rd <- rmsd(pdbs)
+mean(rd)
+```
+
+```{r}
+source("http://tinyurl.com/newviewngl")
+library(NGLVieweR)
+view.pdbs(pdbs)
+```
+
+#PCA
+
+```{r}
+pc <- pca(pdbs)
+plot(pc)
+```
+
+# Residue conservaation from alignment file
+
+```{r}
+aln_file <- list.files(path="hiv_monomer_94b5b/",
+                       pattern = ".a3m$",
+                       full.names = TRUE)
+aln_file
+                    
+```
+
+```{r}
+aln <- read.fasta(aln_file[1], to.upper = TRUE)
+```
+
+```{r}
+dim(aln$ali)
+```
+score residue conservation:
+```{r}
+sim <- conserv(aln)
+```
+
+```{r}
+con <- consensus(aln, cutoff = 0.9)
+con$seq
+```
+plot the conservation along
+```{r}
+plot(sim, typ="h")
+```
+
+conserved positions in structure:
+```{r}
+pdb <- read.pdb(files[1])
+view.pdb(pdb, backgroundColor="pink", highlight=atom.select(pdb, resno=25:28), highlight.style = "spacefill")
+```
+*Instead of HIV Dimer analysis, Barry let us analyze our own novel protein sequence in Alphafold*

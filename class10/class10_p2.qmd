@@ -1,0 +1,99 @@
+---
+title: "class 10: comparative structure analysis"
+author: "shivani lakkaraju"
+format: html
+---
+
+```{r}
+library(bio3d)
+```
+
+```{r}
+id <- "1ake_A"
+
+aa <- get.seq(id)
+aa
+```
+
+Let's search for related sequences in PDB database
+
+```{r}
+blast <- blast.pdb(aa)
+
+```
+
+```{r}
+hits <- plot(blast)
+```
+
+top hits:
+
+```{r}
+hits$pdb.id
+```
+
+We can download all these with the `get.pdb()` function:
+
+```{r}
+files <- get.pdb(hits$pdb.id, path="pdbs", split=TRUE, gzip=TRUE)
+```
+
+```{r}
+# Align releated PDBs
+pdbs <- pdbaln(files, fit = TRUE, exefile="msa")
+```
+
+## conventional analysis
+
+An RMSD analysis:
+
+```{r}
+rd <- rmsd(pdbs)
+```
+
+```{r}
+library(pheatmap)
+pheatmap(rd)
+```
+
+```{r}
+source("http://tinyurl.com/newviewngl")
+
+library(NGLVieweR)
+```
+
+```{r}
+view.pdbs(pdbs)
+```
+
+cluster by RMSD and color our structure display
+
+```{r}
+km <- kmeans(rd, centers=2)
+mycols <- c("red", "blue")[km$cluster]
+```
+
+```{r}
+view.pdbs(pdbs, colors = mycols)
+```
+
+##Principal component analysis
+
+```{r}
+pc <- pca(pdbs)
+plot(pc, col=mycols)
+```
+
+```{r}
+mktrj(pc, file="pca.pdb")
+```
+
+```{r}
+p <- read.pdb("pca.pdb", multi=T)
+view.pdb(p)
+```
+
+```{r}
+ref <- read.pdb("1AKE")
+view.pdb(ref)
+```
