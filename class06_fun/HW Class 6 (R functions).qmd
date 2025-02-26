@@ -1,0 +1,70 @@
+---
+title: "lab 6 homework"
+author: Shivani Lakkaraju
+format: pdf
+---
+
+# first install the bio3d package in the console only:
+```{r}
+# install.packages("bio3d")
+```
+
+# Load the required package
+```{r}
+library(bio3d)
+```
+
+# This function reads a Protein Data Bank (PDB) file, trims it to a specified chain and atom type, extracts B-factor values, and generates a B-factor plot and trimmed PDB object containing only the specified chain and atom type as the *output*. The *inputs* arguments are: 
+
+- pdb_id = The PDB identifier (e.g., "4AKE") of the protein structure to analyze.
+- chain = The chain identifier within the PDB to analyze (default is "A").
+- elety = The atom type to consider for analysis (default is "CA" for alpha carbon).
+- ylab = Label for the y-axis in the plot (default is "B-factor").
+
+```{r}
+analyze_protein_pdb <- function(pdb_id, chain = "A", elety = "CA",
+  ylab = "B-factor") {
+  
+  # Step 1: Read the PDB File
+  pdb <- read.pdb(pdb_id)
+  
+  # Step 2: Trim the PDB to Specified Chain and Atom Type
+  pdb_chain <- trim.pdb(pdb, chain = chain, elety = elety)
+  
+  # Step 3: Extract B-factors
+  b_factors <- pdb_chain$atom$b
+  
+  # Step 4: Plot B-factors
+  plot_title <- paste("B-factor Plot for", pdb_id)
+  plotb3(b_factors, sse = pdb_chain, typ = "l", ylab = ylab, main = plot_title)
+  
+  # Return the Trimmed PDB Object
+  return(pdb_chain)
+}
+```
+
+# To analyze multiple PDB IDs simultaneously and with less copy/paste errors, we will create a vector of PDB IDs that we want to analyze with the above function:
+
+```{r}
+pdb_ids <- c("4AKE", "1AKE", "1E4Y", "2AKE", "3AKE")  
+# Add more IDs as required
+```
+
+# Then, we apply the function to each PDB ID via vectorization using the 'lapply()' function!
+
+```{r}
+results <- lapply(pdb_ids, function(pdb) {
+  analyze_protein_pdb(
+    pdb_id = pdb,
+    chain = "A",
+    elety = "CA",
+    ylab = "B-factor"
+  )
+})
+```
+
+# Assign names to the list elements corresponding to PDB IDs:
+```{r}
+names(results) <- pdb_ids
+```
+

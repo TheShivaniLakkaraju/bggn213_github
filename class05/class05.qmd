@@ -1,0 +1,141 @@
+---
+title: "Class05:Data Visualization with GGPLOT"
+author: "Shivani Lakkaraju"
+format: pdf
+toc: true
+---
+
+#Graphs and plots in R
+
+R has tons of different graphics systems. These include **"base R"** (e.g. the 'plot()' function) and add on packages like **ggplot2**.
+
+Let's start with plotting a simple dataset in "base R" and then ggplot2 to see how they differ.
+
+```{r}
+head(cars)
+```
+To plot this in base R I just use 'plot()'
+```{r}
+plot(cars)
+```
+First to use ggplot2 I need to install the package. For this I use the 'install.packages()' function.
+
+> I will not run 'install.packages()' in my quarto document as this would reinstall the package every time I render the document.
+
+The main function in the ggplot2 package is 'ggplot()'.Before I can use it this function I need to load the package with a 'library()' call.
+
+```{r}
+library(ggplot2)
+ggplot(cars)
+```
+
+There are at least 3 things every ggplot needs:
+
+- dataset i want to plot: **data**
+- aesthetic mapping: **aes**
+- geometries to style: **geoms**
+
+adding layers makes more complicated plots:
+```{r}
+c <- ggplot(cars) +
+  aes(x=speed, y=dist) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs()
+```
+```{r}
+c + labs(title="My nice GGplot", x="speed(mph)", y="stopping distance(ft)") +
+  theme_bw()
+```
+## RNAseq plot with more aes() values
+```{r}
+url <- "https://bioboot.github.io/bimm143_S20/class-material/up_down_expression.txt"
+genes <- read.delim(url)
+head(genes)
+```
+
+Q. Use the nrow() function to find out how many genes are in this dataset. What is your answer? 
+5196
+
+```{r}
+nrow(genes)
+```
+
+Q. Use the colnames() function and the ncol() function on the genes data frame to find out what the column names are (we will need these later) and how many columns there are. How many columns did you find? 
+4
+
+```{r}
+ncol(genes)
+colnames(genes)
+```
+
+Q. Use the table() function on the State column of this data.frame to find out how many ‘up’ regulated genes there are. What is your answer? 
+127
+
+```{r}
+table(genes$State)
+```
+
+Q. Using your values above and 2 significant figures. What fraction of total genes is up-regulated in this dataset? 
+
+```{r}
+round( table(genes$State)/nrow(genes) * 100, 2 )
+```
+
+> Plot this dataset
+
+```{r}
+ggplot(genes, aes(x=Condition1, y=Condition2, col=State)) + geom_point() + scale_colour_manual( values=c("blue","gray","red") ) + labs(title="Gene Expression Changes Upon Drug Treatment", subtitle = "RNAseq data", caption = "BGGN213", x="Control (no drug) ", y="Drug Treatment")
+```
+
+##Gapminder dataset
+
+We can get exposure to setting more 'aes()' parameters with datasets that include more columns of useful data. For example the **gapminder** dataset on GPD and life expectancy for different countries over time.
+
+```{r}
+library(gapminder)
+nrow(gapminder)
+head(gapminder)
+```
+
+> how many unique countries?
+
+```{r}
+length(unique(gapminder$country))
+```
+
+> what years does the dataset cover?
+
+```{r}
+tail(gapminder)
+```
+this dataset covers 1952 - 2007
+
+useful key functions: 
+- nrow()
+- ncol()
+- length()
+- unique()
+- table()
+
+```{r}
+ggplot(gapminder, aes(gdpPercap, lifeExp, col=continent, size = pop)) + geom_point(alpha=0.3) +
+  facet_wrap(~continent)
+```
+
+## combining plots
+
+```{r}
+library(patchwork)
+
+# Setup some example plots 
+p1 <- ggplot(mtcars) + geom_point(aes(mpg, disp))
+p2 <- ggplot(mtcars) + geom_boxplot(aes(gear, disp, group = gear))
+p3 <- ggplot(mtcars) + geom_smooth(aes(disp, qsec))
+p4 <- ggplot(mtcars) + geom_bar(aes(carb))
+
+# Use patchwork to combine them here:
+(p1 | c ) /
+      (p4 | p3)
+```
+
