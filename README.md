@@ -9,11 +9,11 @@ Winter 2025 class content:
 
 - Class **06** [Why, when and how of writing your own R functions](class06/class06.html)
 
-- Class **07** [Bioinformatics R packages from CRAN and BioConductor](class07/class07.html)
+- Class **07** [Bioinformatics R packages from CRAN and BioConductor](class07/class7.html)
 
 - Class **08** [Introduction to machine learning for Bioinformatics 1](class08/class08.html)
 
-- Class **09** [Unsupervised learning mini-project](class09/class09.html)
+- Class **09** [Unsupervised learning mini-project](class09/class9.html)
 
 - Class **10** [Find a gene assignment](class10/class10.html)
 
