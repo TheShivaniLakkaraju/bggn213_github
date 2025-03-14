@@ -21,15 +21,16 @@ Winter 2025 class content:
 
 - Class **13** [Bioinformatics in drug discovery and design](class13/class13.html)
 
-- Class **14** [RNA-seq mini project](class14/14.html)
+- Class **14** [RNA-seq mini project](class14/class14.html)
 
 - Class **15** Hands-on with Git and Github
 
-- Class **16** [Essential UNIX for bioinformatics](class16/16.html)
+- Class **16** [Essential UNIX for bioinformatics](class16/figures.pdf)
 
-- Class **17** [Analyzing sequencing data in the cloud](class17/17.html)
+- Class **17** [Analyzing sequencing data in the cloud](class17/analysis.html)
   
-- Class **18** [Investigating pertussis resurgence mini project](class18/18.html)
+- Class **18** [Investigating pertussis resurgence mini project](class18/Investigating.Pertussis.Resurgence.html)
 
-- Class **19** [Mini Project: Cancer Mutation Analysis](class19/19.html)
+- Class **19** [Mini Project: Cancer Mutation Analysis](class19/lab19.pdf)
 
+![](https://media2.giphy.com/media/66pRZHpxoOOXvf8zQX/giphy.gif?cid=6c09b9524964zmnrb20ko1xjbj1fqfixoxi4z4byigg0nfdk&ep=v1_internal_gif_by_id&rid=giphy.gif&ct=g)
