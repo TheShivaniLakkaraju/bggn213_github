@@ -1,9 +1,9 @@
-# bggn213_github
+# Shivani's Portfolio
 my class work from [BGGN213](https://bioboot.github.io/bggn213_W25/) W25 UC San Diego.
 
 Winter 2025 class content:
 
-- Class **04** [Introduction to R](class04/class04.html)
+- Class **04** [Introduction to R](class04/lab4_R_script.pdf)
 
 - Class **05** [Data visualization with ggplot2](class05/class05.html)
 
