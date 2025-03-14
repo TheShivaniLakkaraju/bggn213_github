@@ -1,0 +1,85 @@
+---
+title: "class 17: Analyzing sequencing data in the cloud"
+author: "shivani"
+format: pdf
+---
+
+# Downstream analysis
+
+```{r}
+folders <- list.files(pattern = "_quant")
+files <- paste0(folders,"/abundance.h5")
+```
+
+```{r}
+file.exists(files)
+```
+```{r}
+names(files) <- sub("_quant", "", folders)
+files
+```
+
+load the tximport library
+```{r}
+library(tximport)
+
+txi.kallisto <- tximport(files, type = "kallisto", txOut = TRUE)
+
+```
+# remove 0 count genes
+
+Before subsequent analysis, we might want to filter out those annotated transcripts with no reads:
+
+```{r}
+to.keep <- rowSums(txi.kallisto$counts) > 0
+kset.nonzero <- txi.kallisto$counts[to.keep,]
+```
+
+```{r}
+sum(rowSums(txi.kallisto$counts)>0)
+```
+And those with no change over the samples:
+
+```{r}
+keep2 <- apply(kset.nonzero,1,sd)>0
+x <- kset.nonzero[keep2,]
+```
+
+# Principal Component Analysis
+```{r}
+pca <- prcomp(t(x), scale=TRUE)
+summary(pca)
+```
+```{r}
+library(ggplot2)
+library(ggrepel)
+
+ggplot(pca$x, aes(PC1, PC2)) +
+  geom_point(col=c("blue","blue","red","red")) +
+  geom_label_repel(label = rownames(pca$x), col=c("blue","blue","red","red"))
+```
+
+# Deseq
+
+```{r}
+library(DESeq2)
+
+sampleTable <- data.frame(condition = factor(rep(c("control", "treatment"), each = 2)))
+rownames(sampleTable) <- colnames(txi.kallisto$counts)
+```
+
+```{r}
+dds <- DESeqDataSetFromTximport(txi.kallisto,
+                                sampleTable, 
+                                ~condition)
+```
+
+```{r}
+dds <- DESeq(dds)
+```
+
+```{r}
+res <- results(dds)
+head(res)
+```
+

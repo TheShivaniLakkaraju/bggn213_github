@@ -1,0 +1,31 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+x <- read.delim("~/Desktop/class16/my_results.txt")
+```
+
+```{r}
+colnames(x) <- c("qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "qstart", "qend", "sstart", "send", "evalue", "bitscore")
+```
+
+```{r}
+hist(x$bitscore, breaks=30)
+```
+
+```{r}
+plot(x$pident  * (x$qend - x$qstart), x$bitscore)
+```
+
+```{r}
+library(ggplot2)
+ggplot(x, aes(pident, bitscore)) + geom_point(alpha=0.1) 
+```
+
+```{r}
+ggplot(x, aes((x$pident * (x$qend - x$qstart)), bitscore)) + geom_point(alpha=0.1) + geom_smooth()
+```
+

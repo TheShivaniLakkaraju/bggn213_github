@@ -1,0 +1,93 @@
+---
+title: "class 19"
+author: "shivani"
+format: html
+---
+
+```{r}
+library(bio3d)
+
+seqs <- read.fasta("~/Desktop/bggn213/class19/A12652928_mutant_seq.fa") 
+seqs
+```
+
+```{r}
+attributes(seqs)
+```
+
+```{r}
+seqs$ali
+```
+```{r}
+## Calculate positional identity scores
+ide <- conserv(seqs$ali, method="identity")
+mutant.sites <- which(ide < 1) 
+
+## Exclude gap possitions from analysis
+gaps <- gap.inspect(seqs)
+mutant.sites <- mutant.sites[mutant.sites %in% gaps$f.inds]
+
+mutant.sites
+```
+```{r}
+score <- conserve(seqs)
+```
+
+```{r}
+inds <- score != 1
+which(inds)
+```
+```{r}
+print(rownames(seqs$ali))
+print(dim(seqs$ali))
+```
+
+
+
+```{r}
+## Make a "names" label for our output sequences (one per mutant)
+mutant.names <- paste0(seqs$ali["wt_healthy",mutant.sites],
+                       mutant.sites,              seqs$ali["mutant_tumor",mutant.sites])
+
+mutant.names
+```
+```{r}
+## Sequence positions surounding each mutant site
+start.position <- mutant.sites - 8
+end.position <-  mutant.sites + 8
+
+# Blank matrix to store sub-sequences
+store.seqs <- matrix("-", nrow=length(mutant.sites), ncol=17)
+rownames(store.seqs) <- mutant.names
+
+## Extract each sub-sequence
+for(i in 1:length(mutant.sites)) {
+  store.seqs[i,] <- seqs$ali["mutant_tumor",start.position[i]:end.position[i]]
+}
+
+store.seqs
+```
+
+```{r}
+## First blank out the gap positions 
+store.seqs[store.seqs == "-"] <- ""
+
+## Output a FASTA file for further analysis
+write.fasta(seqs=store.seqs, ids=mutant.names, file="subsequences.fa")
+```
+
+```{r}
+#testing classmates sequence 
+infile <- "https://bioboot.github.io/bggn213_W25/class-material/lab19_sequences/A12925462_mutant_seq.fa"
+
+x <- read.fasta(infile)
+score <- conserv(x)
+inds <- score != 1
+positions <- which(inds)
+
+paste(x$ali["wt_healthy",positions], 
+      positions, 
+      x$ali["mutant_tumor", positions], sep="")
+
+```
+
